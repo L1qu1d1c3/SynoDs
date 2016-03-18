@@ -34,7 +34,7 @@ namespace SynoDs.UWP.ViewModels
 
         public string Password { get; set; }
 
-        private int Port => 5001;
+        public int Port => 0;
 
         public bool UseSsl { get; set; }
 
@@ -100,8 +100,8 @@ namespace SynoDs.UWP.ViewModels
 #endif
             Views.Shell.SetBusy(true, "Loading...");
             this.IsLoggingIn = true;
-                
-            var fullUrl = new Uri($"{Host}:{Port}");
+            var protocolPort = this.getProtocol(this.Host);
+            var fullUrl = new Uri($"{Host}:{protocolPort}");
             var loginResult = await this.authenticationProvider.LoginAsync(fullUrl, this.UserName, this.Password);
             
             Views.Shell.SetBusy(false);
@@ -124,6 +124,20 @@ namespace SynoDs.UWP.ViewModels
             NavigationService.Navigate(typeof (Views.MainPage));
         }
 
+        private int getProtocol(string Host)
+        {
+            string _host = Host;
+            int _port = 0;
+            if (_host.Contains("https://"))
+            {
+                _port = 5001;
+            }
+            else if (_host.Contains("http://"))
+            {
+                _port = 5000;
+            }
+            return _port;   
+        }
         private void StoreCredentialsInVault()
         {
             var roamingSettings = Windows.Storage.ApplicationData.Current.RoamingSettings;
@@ -150,6 +164,7 @@ namespace SynoDs.UWP.ViewModels
             var roamingSettings = ApplicationData.Current.RoamingSettings;
             var container = roamingSettings.CreateContainer(ConnectionContainerName,
                 ApplicationDataCreateDisposition.Always);
+            var LoginPort = this.Port;
 
             foreach (var kvp in container.Values)
             {
